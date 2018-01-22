@@ -11,4 +11,7 @@
 
     <string name="transition_photo" translatable="false">transition_photo</string>
 
+    <string name="no_connection">No Internet Connection</string>
+    <string name="retry">Retry</string>
+
 </resources>

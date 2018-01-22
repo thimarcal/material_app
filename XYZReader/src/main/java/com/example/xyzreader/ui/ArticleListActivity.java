@@ -7,7 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -21,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
@@ -42,9 +47,15 @@ public class ArticleListActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = ArticleListActivity.class.toString();
+    private CoordinatorLayout coordinatorLayout;
     private Toolbar mToolbar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mRecyclerView;
+
+    private Snackbar snackbar;
+
+    private ConnectivityManager connManager;
+    private NetworkInfo networkInfo;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss");
     // Use default locale format
@@ -58,7 +69,15 @@ public class ArticleListActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_article_list);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinator_layout);
 
+        connManager = (ConnectivityManager)
+                getSystemService(CONNECTIVITY_SERVICE);
+        networkInfo = connManager.getActiveNetworkInfo();
+
+        snackbar = Snackbar.make(coordinatorLayout,
+                getString(R.string.no_connection),
+                Snackbar.LENGTH_INDEFINITE);
 
         final View toolbarContainerView = findViewById(R.id.toolbar_container);
 
@@ -73,6 +92,12 @@ public class ArticleListActivity extends AppCompatActivity implements
         });
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        boolean isConnected = (networkInfo != null) && (networkInfo.isConnected());
+        if (!isConnected) {
+            snackbar.show();
+            return;
+        }
         getLoaderManager().initLoader(0, null, this);
 
         if (savedInstanceState == null) {
@@ -81,8 +106,17 @@ public class ArticleListActivity extends AppCompatActivity implements
     }
 
     private void refresh() {
-        Log.d("ArticleListActivity", "Refreshing");
+        networkInfo = connManager.getActiveNetworkInfo();
+        boolean isConnected = (networkInfo != null) && (networkInfo.isConnected());
+
+        if (!isConnected) {
+            snackbar.show();
+            return;
+        } else {
+            snackbar.dismiss();
+        }
         startService(new Intent(this, UpdaterService.class));
+
     }
 
     @Override
